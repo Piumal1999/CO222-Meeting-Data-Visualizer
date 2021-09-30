@@ -1,5 +1,16 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+
+struct _ {
+    int occurrences;
+    char *name;
+    int participants;
+    int time;
+    struct _ *next;
+} typedef meetingHost_t;
+
+meetingHost_t *meetingHosts = NULL;
 
 int main(int argc, char ** argv) {
     char * fileNames[255];
@@ -25,9 +36,15 @@ int main(int argc, char ** argv) {
         }
         argIndex++;
     }
-    for(int i=0; i<=filenameIndex; i++){
+
+    if (fileNamesIndex == 0) {
+        // print no files error
+        return 0;
+    }
+
+    for (int i = 0; i <= fileNamesIndex; i++) {
         filePointer = NULL;
-        filePointer = fopen(filenames+i, "r");
+        filePointer = fopen(*fileNames + i, "r");
         if (filePointer == NULL) {
             // terminate immediately
         } else {
