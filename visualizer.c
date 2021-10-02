@@ -7,6 +7,7 @@
 #define TIME 1
 #define PARTICIPANTS 2
 
+#define UNDEFINED -1
 
 struct _ {
     int occurrences;
@@ -19,7 +20,7 @@ struct _ {
 meetingHost_t *meetingHosts = NULL;
 int mode;
 int isScaled = 0;
-int rows;
+int rows = UNDEFINED;
 
 int main(int argc, char ** argv) {
     char * fileNames[255];
@@ -35,20 +36,25 @@ int main(int argc, char ** argv) {
         } else if (0 == strcmp(argv[argIndex], "-p")) {
             mode = PARTICIPANTS;
         } else if (0 == strcmp(argv[argIndex], "-l")) {
-            if (argIndex == argc-1) {
+            if (argIndex == argc - 1) {
                 // print length not given error
                 return 0;
             } else {
-                char * lString = argv[argIndex+1];
-                for (int i = 0; lString[i]!='\0' ; i++) {
-                    if (isdigit(lString[i]) == 0 && !(i==0 && lString[1]!='\0' && (lString[i] == '+' || lString[i] == '-'))){
+                argIndex++;
+                char *lString = argv[argIndex];
+                for (int i = 0; lString[i] != '\0'; i++) {
+                    if (isdigit(lString[i]) == 0 &&
+                        !(i == 0 && lString[1] != '\0' && (lString[i] == '+' || lString[i] == '-'))) {
                         // print invalid options for length error
                         return 0;
                     }
                 }
                 int length = atoi(lString);
-                if (length<0){
+                if (length < 0) {
                     // print minus length error
+                    return 0;
+                } else if (length == 0) {
+                    return 0;
                 } else {
                     rows = length;
                 }
@@ -58,8 +64,8 @@ int main(int argc, char ** argv) {
         } else {
             // terminate immediately if not .csv format
             int length = strlen(argv[argIndex]);
-            char *extension = &(argv[argIndex])[length-4];
-            if(0 != strcmp(extension, ".csv")) {
+            char *extension = &(argv[argIndex])[length - 4];
+            if (0 != strcmp(extension, ".csv")) {
                 // print incorrect file message
                 return 0;
             }
