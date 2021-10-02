@@ -80,7 +80,42 @@ int main(int argc, char ** argv) {
         if (filePointer == NULL) {
             // terminate immediately
         } else {
-            // read file
+            char name[255];
+            char participants[50];
+            char hours[50];
+            char minutes[50];
+            char seconds[50];
+            while (1) {
+                int scanRes = fscanf(filePointer, "%[^,\n],%[^,\n],%[^:\n]:%[^:\n]:%[^\n]\n", name, participants, hours,
+                                     minutes, seconds);
+                if (scanRes == EOF) {
+                    break;
+                } else if (scanRes != 5) {
+                    // error
+                    break;
+                } else {
+                    meetingHost_t *current;
+                    for (current = meetingHosts; current != NULL; current = current->next) {
+                        if (strcmp(current->name, name) == 0) {
+                            break;
+                        }
+                    }
+                    if (current == NULL) {
+                        meetingHost_t *newHost = (meetingHost_t *) malloc(sizeof(meetingHost_t));
+                        newHost->name = (char *) malloc(sizeof(char) * strlen(name));
+                        strcpy(newHost->name, name);
+                        newHost->occurrences = 1;
+                        newHost->participants = atoi(participants);
+                        newHost->time = atoi(hours) * 60 + atoi(minutes);
+                        newHost->next = meetingHosts;
+                        meetingHosts = newHost;
+                    } else {
+                        current->occurrences++;
+                        current->participants += atoi(participants);
+                        current->time += atoi(hours) * 60 + atoi(minutes);
+                    }
+                }
+            }
         }
     }
 
