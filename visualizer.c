@@ -22,6 +22,11 @@ int mode;
 int isScaled = 0;
 int rows = UNDEFINED;
 
+meetingHost_t *getSortedList();
+meetingHost_t *sortListByMeetings();
+meetingHost_t *sortListByParticipants();
+meetingHost_t *sortListByTime();
+
 int main(int argc, char ** argv) {
     char * fileNames[255];
     int fileNamesIndex = 0;
@@ -125,7 +130,25 @@ int main(int argc, char ** argv) {
         }
     }
 
-    // sort by occurrence
+    meetingHost_t * sortedList = getSortedList();
+
+    // plot the graph according to the mode
+}
+
+meetingHost_t *getSortedList() {
+    switch (mode) {
+        case MEETINGS:
+            return sortListByMeetings();
+        case PARTICIPANTS:
+            return sortListByParticipants();
+        case TIME:
+            return sortListByTime();
+        default:
+            return sortListByMeetings();
+    }
+}
+
+meetingHost_t *sortListByMeetings() {
     meetingHost_t *sortedList = NULL;
     meetingHost_t *sortedListHead = NULL;
     for (int i = 0; meetingHosts != NULL && (rows == UNDEFINED || i < rows); i++) {
@@ -151,10 +174,72 @@ int main(int argc, char ** argv) {
         } else {
             previousToHighest->next = tempHighest->next;
         }
+        
+    }
+    sortedListHead->next = NULL;
+    return sortedList;
+}
 
+meetingHost_t *sortListByParticipants() {
+    meetingHost_t *sortedList = NULL;
+    meetingHost_t *sortedListHead = NULL;
+    for (int i = 0; meetingHosts != NULL && (rows == UNDEFINED || i < rows); i++) {
+
+        meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
+        for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
+            if (tempHighest->participants <= current->participants) {
+                tempHighest = current;
+                previousToHighest = previous;
+            }
+        }
+
+        if (sortedList == NULL) {
+            sortedList = tempHighest;
+            sortedListHead = sortedList;
+        } else {
+            sortedListHead->next = tempHighest;
+            sortedListHead = sortedListHead->next;
+        }
+
+        if (previousToHighest == NULL) {
+            meetingHosts = tempHighest->next;
+        } else {
+            previousToHighest->next = tempHighest->next;
+        }
 
     }
     sortedListHead->next = NULL;
+    return sortedList;
+}
 
-    // plot the graph according to the mode
+meetingHost_t *sortListByTime() {
+    meetingHost_t *sortedList = NULL;
+    meetingHost_t *sortedListHead = NULL;
+    for (int i = 0; meetingHosts != NULL && (rows == UNDEFINED || i < rows); i++) {
+
+        meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
+        for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
+            if (tempHighest->time <= current->time) {
+                tempHighest = current;
+                previousToHighest = previous;
+            }
+        }
+
+        if (sortedList == NULL) {
+            sortedList = tempHighest;
+            sortedListHead = sortedList;
+        } else {
+            sortedListHead->next = tempHighest;
+            sortedListHead = sortedListHead->next;
+        }
+
+        if (previousToHighest == NULL) {
+            meetingHosts = tempHighest->next;
+        } else {
+            previousToHighest->next = tempHighest->next;
+        }
+
+    }
+    sortedListHead->next = NULL;
+    return sortedList;
 }
