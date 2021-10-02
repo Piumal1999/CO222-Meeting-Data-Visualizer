@@ -125,5 +125,36 @@ int main(int argc, char ** argv) {
         }
     }
 
+    // sort by occurrence
+    meetingHost_t *sortedList = NULL;
+    meetingHost_t *sortedListHead = NULL;
+    for (int i = 0; meetingHosts != NULL && (rows == UNDEFINED || i < rows); i++) {
+
+        meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
+        for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
+            if (tempHighest->occurrences <= current->occurrences) {
+                tempHighest = current;
+                previousToHighest = previous;
+            }
+        }
+
+        if (sortedList == NULL) {
+            sortedList = tempHighest;
+            sortedListHead = sortedList;
+        } else {
+            sortedListHead->next = tempHighest;
+            sortedListHead = sortedListHead->next;
+        }
+
+        if (previousToHighest == NULL) {
+            meetingHosts = tempHighest->next;
+        } else {
+            previousToHighest->next = tempHighest->next;
+        }
+
+
+    }
+    sortedListHead->next = NULL;
+
     // plot the graph according to the mode
 }
