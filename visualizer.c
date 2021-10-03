@@ -3,14 +3,13 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#define FALSE 0;
+#define FALSE 0
 #define TRUE 1
 
 #define MEETINGS 0
 #define TIME 1
 #define PARTICIPANTS 2
 
-#define UNDEFINED -1
 
 struct _ {
     int occurrences;
@@ -23,7 +22,7 @@ struct _ {
 meetingHost_t *meetingHosts = NULL;
 int mode;
 int isScaled = 0;
-int rows = UNDEFINED;
+int rows = 10;
 
 int getMaxLengthOfNames();
 meetingHost_t *getSortedList();
@@ -184,7 +183,7 @@ meetingHost_t *getSortedList() {
 meetingHost_t *sortListByMeetings() {
     meetingHost_t *sortedList = NULL;
     meetingHost_t *sortedListHead = NULL;
-    for (int i = 0; meetingHosts != NULL && (rows == UNDEFINED || i < rows); i++) {
+    for (int i = 0; meetingHosts != NULL && i < rows; i++) {
 
         meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
         for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
@@ -216,7 +215,7 @@ meetingHost_t *sortListByMeetings() {
 meetingHost_t *sortListByParticipants() {
     meetingHost_t *sortedList = NULL;
     meetingHost_t *sortedListHead = NULL;
-    for (int i = 0; meetingHosts != NULL && (rows == UNDEFINED || i < rows); i++) {
+    for (int i = 0; meetingHosts != NULL && i < rows; i++) {
 
         meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
         for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
@@ -248,7 +247,7 @@ meetingHost_t *sortListByParticipants() {
 meetingHost_t *sortListByTime() {
     meetingHost_t *sortedList = NULL;
     meetingHost_t *sortedListHead = NULL;
-    for (int i = 0; meetingHosts != NULL && (rows == UNDEFINED || i < rows); i++) {
+    for (int i = 0; meetingHosts != NULL && i < rows; i++) {
 
         meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
         for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
