@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#define FALSE 0;
+#define TRUE 1
+
 #define MEETINGS 0
 #define TIME 1
 #define PARTICIPANTS 2
@@ -22,6 +25,7 @@ int mode;
 int isScaled = 0;
 int rows = UNDEFINED;
 
+int getMaxLengthOfNames();
 meetingHost_t *getSortedList();
 meetingHost_t *sortListByMeetings();
 meetingHost_t *sortListByParticipants();
@@ -96,7 +100,7 @@ int main(int argc, char ** argv) {
             char hours[50];
             char minutes[50];
             char seconds[50];
-            while (1) {
+            while (TRUE) {
                 int scanRes = fscanf(filePointer, "%[^,\n],%[^,\n],%[^:\n]:%[^:\n]:%[^\n]\n", name, participants, hours,
                                      minutes, seconds);
                 if (scanRes == EOF) {
@@ -113,7 +117,7 @@ int main(int argc, char ** argv) {
                     }
                     if (current == NULL) {
                         meetingHost_t *newHost = (meetingHost_t *) malloc(sizeof(meetingHost_t));
-                        newHost->name = (char *) malloc(sizeof(char) * strlen(name));
+                        newHost->name = (char *) malloc(sizeof(char) * (strlen(name)) + 1);
                         strcpy(newHost->name, name);
                         newHost->occurrences = 1;
                         newHost->participants = atoi(participants);
@@ -133,6 +137,35 @@ int main(int argc, char ** argv) {
     meetingHost_t * sortedList = getSortedList();
 
     // plot the graph according to the mode
+    int spaceForName = getMaxLengthOfNames(sortedList);
+    int remainingSpace = 80 - spaceForName - 3;
+
+    printf("\n");
+
+    // print graph data
+    for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
+        printf(" %*s \u2502\n", -1 * spaceForName, "");
+        printf(" %*s \u2502\n", -1 * spaceForName, current->name);
+        printf(" %*s \u2502\n", -1 * spaceForName, "");
+
+        printf(" %*s \u2502\n", -1 * spaceForName, "");
+    }
+
+    printf(" %*s \u2514", -1 * spaceForName, "");
+    for (int i = 0; i < remainingSpace; i++) {
+        printf("\u2500");
+    }
+    printf("\n");
+}
+
+int getMaxLengthOfNames(meetingHost_t * sortedList) {
+    int maxLength = 0;
+    for (meetingHost_t * current = sortedList; current != NULL; current = current->next) {
+        if (strlen(current->name) > maxLength) {
+            maxLength = strlen(current->name);
+        }
+    }
+    return maxLength;
 }
 
 meetingHost_t *getSortedList() {
