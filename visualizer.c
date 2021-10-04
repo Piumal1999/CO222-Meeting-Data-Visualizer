@@ -102,15 +102,12 @@ int main(int argc, char ** argv) {
         } else {
             char name[255];
             char participants[50];
-            char hours[50];
-            char minutes[50];
-            char seconds[50];
+            char time[50];
             while (TRUE) {
-                int scanRes = fscanf(filePointer, "%[^,\n],%[^,\n],%[^:\n]:%[^:\n]:%[^\n]\n", name, participants, hours,
-                                     minutes, seconds);
+                int scanRes = fscanf(filePointer, "%[^,],%[^,],%[^\n]\n", name, participants, time);
                 if (scanRes == EOF) {
                     break;
-                } else if (scanRes != 5) {
+                } else if (scanRes != 3) {
                     // error
                     break;
                 } else {
@@ -126,13 +123,32 @@ int main(int argc, char ** argv) {
                         strcpy(newHost->name, name);
                         newHost->occurrences = 1;
                         newHost->participants = atoi(participants);
-                        newHost->time = atoi(hours) * 60 + atoi(minutes);
+
+                        // get time duration
+                        int hours, minutes=0;
+                        char * token = strtok(time, ":");
+                        hours = atoi(token);
+                        if (token != NULL) {
+                            token = strtok(NULL, ":");
+                            minutes = atoi(token);
+                        }
+
+                        newHost->time = hours * 60 + minutes;
                         newHost->next = meetingHosts;
                         meetingHosts = newHost;
                     } else {
                         current->occurrences++;
                         current->participants += atoi(participants);
-                        current->time += atoi(hours) * 60 + atoi(minutes);
+
+                        // get time duration
+                        int hours, minutes=0;
+                        char * token = strtok(time, ":");
+                        hours = atoi(token);
+                        if (token != NULL) {
+                            token = strtok(NULL, ":");
+                            minutes = atoi(token);
+                        }
+                        current->time += hours * 60 + minutes;
                     }
                 }
             }
