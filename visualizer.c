@@ -121,34 +121,53 @@ int main(int argc, char ** argv) {
                         meetingHost_t *newHost = (meetingHost_t *) malloc(sizeof(meetingHost_t));
                         newHost->name = (char *) malloc(sizeof(char) * (strlen(name)) + 1);
                         strcpy(newHost->name, name);
-                        newHost->occurrences = 1;
-                        newHost->participants = atoi(participants);
 
-                        // get time duration
-                        int hours, minutes=0;
-                        char * token = strtok(time, ":");
-                        hours = atoi(token);
-                        if (token != NULL) {
-                            token = strtok(NULL, ":");
-                            minutes = atoi(token);
+                        switch (mode) {
+                            case MEETINGS:
+                                newHost->occurrences = 1;
+                                break;
+                            case PARTICIPANTS:
+                                newHost->participants = atoi(participants);
+                                break;
+                            case TIME: {
+                                int hours, minutes = 0;
+                                char *token = strtok(time, ":");
+                                hours = atoi(token);
+                                if (token != NULL) {
+                                    token = strtok(NULL, ":");
+                                    minutes = atoi(token);
+                                }
+                                newHost->time = hours * 60 + minutes;
+                                break;
+                            }
+                            default:
+                                newHost->occurrences = 1;
                         }
-
-                        newHost->time = hours * 60 + minutes;
                         newHost->next = meetingHosts;
                         meetingHosts = newHost;
                     } else {
-                        current->occurrences++;
-                        current->participants += atoi(participants);
 
-                        // get time duration
-                        int hours, minutes=0;
-                        char * token = strtok(time, ":");
-                        hours = atoi(token);
-                        if (token != NULL) {
-                            token = strtok(NULL, ":");
-                            minutes = atoi(token);
+                        switch (mode) {
+                            case MEETINGS:
+                                current->occurrences++;
+                                break;
+                            case PARTICIPANTS:
+                                current->participants += atoi(participants);
+                                break;
+                            case TIME: {
+                                int hours, minutes = 0;
+                                char *token = strtok(time, ":");
+                                hours = atoi(token);
+                                if (token != NULL) {
+                                    token = strtok(NULL, ":");
+                                    minutes = atoi(token);
+                                }
+                                current->time += hours * 60 + minutes;
+                                break;
+                            }
+                            default:
+                                current->occurrences++;
                         }
-                        current->time += hours * 60 + minutes;
                     }
                 }
             }
@@ -364,7 +383,7 @@ meetingHost_t *sortListByMeetings() {
         } else {
             previousToHighest->next = tempHighest->next;
         }
-        
+
     }
     sortedListHead->next = NULL;
     return sortedList;
