@@ -24,6 +24,8 @@ int isScaled = FALSE;
 int rows = 10;
 
 int getMaxLengthOfNames(meetingHost_t *sortedList);
+int getMaxValue(meetingHost_t *sortedList, int mode);
+int getNumberOfDigits(int number);
 meetingHost_t *getSortedListByMode(int mode);
 meetingHost_t *sortListByMeetings();
 meetingHost_t *sortListByParticipants();
@@ -136,7 +138,8 @@ int main(int argc, char ** argv) {
     meetingHost_t *sortedList = getSortedListByMode(mode);
     // plot the graph according to the mode
     int spaceForName = getMaxLengthOfNames(sortedList);
-    int remainingSpace = 80 - spaceForName - 3;
+    int spaceForValue = getNumberOfDigits(getMaxValue(sortedList, mode));
+    int remainingSpace = 80 - spaceForName - spaceForValue - 3;
 
     printf("\n");
 
@@ -150,7 +153,7 @@ int main(int argc, char ** argv) {
     }
 
     printf(" %*s \u2514", -1 * spaceForName, "");
-    for (int i = 0; i < remainingSpace; i++) {
+    for (int i = 0; i < remainingSpace + spaceForValue; i++) {
         printf("\u2500");
     }
     printf("\n");
@@ -164,6 +167,27 @@ int getMaxLengthOfNames(meetingHost_t * sortedList) {
         }
     }
     return maxLength;
+}
+
+int getMaxValue(meetingHost_t *sortedList, int mode) {
+    if (mode == MEETINGS) {
+        return sortedList->occurrences;
+    } else if (mode == PARTICIPANTS) {
+        return sortedList->participants;
+    } else if (mode == TIME) {
+        return sortedList->time;
+    } else {
+        return sortedList->occurrences;
+    }
+}
+
+int getNumberOfDigits(int number) {
+    int digits = 0;
+    while (number != 0) {
+        number = number / 10;
+        digits++;
+    }
+    return digits;
 }
 
 meetingHost_t *getSortedListByMode(int mode) {
