@@ -146,7 +146,12 @@ int main(int argc, char ** argv) {
     int spaceForValue = getNumberOfDigits(getMaxValue(sortedList, mode));
     int remainingSpace = 80 - spaceForName - spaceForValue - 3;
 
-    float blockValue = 1.0 * total / remainingSpace;
+    float blockValue;
+    if (isScaled) {
+        blockValue = 1.0 * getMaxValue(sortedList, mode) / remainingSpace;
+    } else {
+        blockValue = 1.0 * total / remainingSpace;
+    }
 
     printf("\n");
 
