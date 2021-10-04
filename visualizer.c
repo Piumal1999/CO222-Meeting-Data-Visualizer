@@ -30,6 +30,10 @@ meetingHost_t *getSortedListByMode(int mode);
 meetingHost_t *sortListByMeetings();
 meetingHost_t *sortListByParticipants();
 meetingHost_t *sortListByTime();
+int getTotalByMode(meetingHost_t *sortedList, int mode);
+int getTotalMeetings(meetingHost_t *sortedList);
+int getTotalParticipants(meetingHost_t *sortedList);
+int getTotalTime(meetingHost_t *sortedList);
 
 int main(int argc, char ** argv) {
     char * fileNames[255];
@@ -135,19 +139,92 @@ int main(int argc, char ** argv) {
         }
     }
 
+    int total = getTotalByMode(meetingHosts, mode);
     meetingHost_t *sortedList = getSortedListByMode(mode);
     // plot the graph according to the mode
     int spaceForName = getMaxLengthOfNames(sortedList);
     int spaceForValue = getNumberOfDigits(getMaxValue(sortedList, mode));
     int remainingSpace = 80 - spaceForName - spaceForValue - 3;
 
+    float blockValue = 1.0 * total / remainingSpace;
+
     printf("\n");
 
     // print graph data
     for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
-        printf(" %*s \u2502\n", -1 * spaceForName, "");
-        printf(" %*s \u2502\n", -1 * spaceForName, current->name);
-        printf(" %*s \u2502\n", -1 * spaceForName, "");
+        if (mode == MEETINGS) {
+            int blocks = current->occurrences / blockValue;
+            printf(" %*s \u2502", -1 * spaceForName, ""); // line 1
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("\n");
+            printf(" %*s \u2502", -1 * spaceForName, current->name);    // line 2
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("%d", current->occurrences);
+            printf("\n");
+            printf(" %*s \u2502", -1 * spaceForName, ""); // line 3
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("\n");
+        } else if (mode == PARTICIPANTS) {
+            int blocks = current->participants / blockValue;
+            printf(" %*s \u2502", -1 * spaceForName, ""); // line 1
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("\n");
+            printf(" %*s \u2502", -1 * spaceForName, current->name);    // line 2
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("%d", current->participants);
+            printf("\n");
+            printf(" %*s \u2502", -1 * spaceForName, ""); // line 3
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("\n");
+        } else if (mode == TIME) {
+            int blocks = current->time / blockValue;
+            printf(" %*s \u2502", -1 * spaceForName, ""); // line 1
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("\n");
+            printf(" %*s \u2502", -1 * spaceForName, current->name);    // line 2
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("%d ", current->time);
+            printf("\n");
+            printf(" %*s \u2502", -1 * spaceForName, ""); // line 3
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("\n");
+        } else {
+            int blocks = current->occurrences / blockValue;
+            printf(" %*s \u2502", -1 * spaceForName, ""); // line 1
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("\n");
+            printf(" %*s \u2502", -1 * spaceForName, current->name);    // line 2
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("%d", current->occurrences);
+            printf("\n");
+            printf(" %*s \u2502", -1 * spaceForName, ""); // line 3
+            for (int i = 0; i < blocks; i++) {
+                printf("\u2591");
+            }
+            printf("\n");
+        }
 
         printf(" %*s \u2502\n", -1 * spaceForName, ""); // spacing line
     }
@@ -188,6 +265,43 @@ int getNumberOfDigits(int number) {
         digits++;
     }
     return digits;
+}
+
+int getTotalByMode(meetingHost_t *sortedList, int mode) {
+    switch (mode) {
+        case MEETINGS:
+            return getTotalMeetings(sortedList);
+        case PARTICIPANTS:
+            return getTotalParticipants(sortedList);
+        case TIME:
+            return getTotalTime(sortedList);
+        default:
+            return getTotalMeetings(sortedList);
+    }
+}
+
+int getTotalMeetings(meetingHost_t *sortedList) {
+    int total = 0;
+    for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
+        total += current->occurrences;
+    }
+    return total;
+}
+
+int getTotalParticipants(meetingHost_t *sortedList) {
+    int total = 0;
+    for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
+        total += current->participants;
+    }
+    return total;
+}
+
+int getTotalTime(meetingHost_t *sortedList) {
+    int total = 0;
+    for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
+        total += current->time;
+    }
+    return total;
 }
 
 meetingHost_t *getSortedListByMode(int mode) {
