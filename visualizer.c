@@ -7,39 +7,39 @@
 #define TRUE 1
 
 #define MEETINGS 0
-#define TIME 1
-#define PARTICIPANTS 2
-
+#define PARTICIPANTS 1
+#define TIME 2
 
 struct _ {
-    int occurrences;
+    int meetings;
     char *name;
     int participants;
     int time;
     struct _ *next;
 } typedef meetingHost_t;
 
-meetingHost_t *meetingHosts = NULL;
-int isScaled = FALSE;
-int rows = 10;
-
-int getMaxLengthOfNames(meetingHost_t *sortedList);
-int getMaxValue(meetingHost_t *sortedList, int mode);
-int getNumberOfDigits(int number);
-meetingHost_t *getSortedListByMode(int mode);
+int getMaxLengthOfNames(meetingHost_t *);
+int getMaxValue(meetingHost_t *, int);
+int getNumberOfDigits(int);
+meetingHost_t *getSortedListByMode(int);
 meetingHost_t *sortListByMeetings();
 meetingHost_t *sortListByParticipants();
 meetingHost_t *sortListByTime();
-int getTotalByMode(meetingHost_t *sortedList, int mode);
-int getTotalMeetings(meetingHost_t *sortedList);
-int getTotalParticipants(meetingHost_t *sortedList);
-int getTotalTime(meetingHost_t *sortedList);
+int getTotalByMode(meetingHost_t *, int);
+int getTotalMeetings(meetingHost_t *);
+int getTotalParticipants(meetingHost_t *);
+int getTotalTime(meetingHost_t *);
+void setRowCount(char *);
+
+meetingHost_t *meetingHosts = NULL;
+int rows = 10;
 
 int main(int argc, char ** argv) {
+    int mode;
+    int isScaled = FALSE;
     char * fileNames[255];
     int fileNamesIndex = 0;
     FILE * filePointer;
-    int mode;
 
     int argIndex = 1;
     while (argIndex < argc) {
@@ -49,32 +49,16 @@ int main(int argc, char ** argv) {
             mode = TIME;
         } else if (0 == strcmp(argv[argIndex], "-p")) {
             mode = PARTICIPANTS;
+        } else if (0 == strcmp(argv[argIndex], "--scaled")) {
+            isScaled = TRUE;
         } else if (0 == strcmp(argv[argIndex], "-l")) {
             if (argIndex == argc - 1) {
                 // print length not given error
                 return 0;
             } else {
                 argIndex++;
-                char *lString = argv[argIndex];
-                for (int i = 0; lString[i] != '\0'; i++) {
-                    if (isdigit(lString[i]) == 0 &&
-                        !(i == 0 && lString[1] != '\0' && (lString[i] == '+' || lString[i] == '-'))) {
-                        // print invalid options for length error
-                        return 0;
-                    }
-                }
-                int length = atoi(lString);
-                if (length < 0) {
-                    // print minus length error
-                    return 0;
-                } else if (length == 0) {
-                    return 0;
-                } else {
-                    rows = length;
-                }
+                setRowCount(argv[argIndex]);
             }
-        } else if (0 == strcmp(argv[argIndex], "--scaled")) {
-            isScaled = TRUE;
         } else {
             // terminate immediately if not .csv format
             int length = strlen(argv[argIndex]);
@@ -94,11 +78,12 @@ int main(int argc, char ** argv) {
         return 0;
     }
 
-    for (int i = 0; i <= fileNamesIndex; i++) {
+    for (int i = 0; i < fileNamesIndex; i++) {
         filePointer = NULL;
         filePointer = fopen(*fileNames + i, "r");
         if (filePointer == NULL) {
             // terminate immediately
+            return 0;
         } else {
             char name[255];
             char participants[50];
@@ -109,7 +94,7 @@ int main(int argc, char ** argv) {
                     break;
                 } else if (scanRes != 3) {
                     // error
-                    break;
+                    return 0;
                 } else {
                     meetingHost_t *current;
                     for (current = meetingHosts; current != NULL; current = current->next) {
@@ -124,7 +109,7 @@ int main(int argc, char ** argv) {
 
                         switch (mode) {
                             case MEETINGS:
-                                newHost->occurrences = 1;
+                                newHost->meetings = 1;
                                 break;
                             case PARTICIPANTS:
                                 newHost->participants = atoi(participants);
@@ -141,7 +126,7 @@ int main(int argc, char ** argv) {
                                 break;
                             }
                             default:
-                                newHost->occurrences = 1;
+                                newHost->meetings = 1;
                         }
                         newHost->next = meetingHosts;
                         meetingHosts = newHost;
@@ -149,7 +134,7 @@ int main(int argc, char ** argv) {
 
                         switch (mode) {
                             case MEETINGS:
-                                current->occurrences++;
+                                current->meetings++;
                                 break;
                             case PARTICIPANTS:
                                 current->participants += atoi(participants);
@@ -166,7 +151,7 @@ int main(int argc, char ** argv) {
                                 break;
                             }
                             default:
-                                current->occurrences++;
+                                current->meetings++;
                         }
                     }
                 }
@@ -175,6 +160,7 @@ int main(int argc, char ** argv) {
     }
 
     int total = getTotalByMode(meetingHosts, mode);
+    free(meetingHosts);
     meetingHost_t *sortedList = getSortedListByMode(mode);
     // plot the graph according to the mode
     int spaceForName = getMaxLengthOfNames(sortedList);
@@ -193,7 +179,7 @@ int main(int argc, char ** argv) {
     // print graph data
     for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
         if (mode == MEETINGS) {
-            int blocks = current->occurrences / blockValue;
+            int blocks = current->meetings / blockValue;
             printf(" %*s \u2502", -1 * spaceForName, ""); // line 1
             for (int i = 0; i < blocks; i++) {
                 printf("\u2591");
@@ -203,7 +189,7 @@ int main(int argc, char ** argv) {
             for (int i = 0; i < blocks; i++) {
                 printf("\u2591");
             }
-            printf("%d", current->occurrences);
+            printf("%d", current->meetings);
             printf("\n");
             printf(" %*s \u2502", -1 * spaceForName, ""); // line 3
             for (int i = 0; i < blocks; i++) {
@@ -247,7 +233,7 @@ int main(int argc, char ** argv) {
             }
             printf("\n");
         } else {
-            int blocks = current->occurrences / blockValue;
+            int blocks = current->meetings / blockValue;
             printf(" %*s \u2502", -1 * spaceForName, ""); // line 1
             for (int i = 0; i < blocks; i++) {
                 printf("\u2591");
@@ -257,7 +243,7 @@ int main(int argc, char ** argv) {
             for (int i = 0; i < blocks; i++) {
                 printf("\u2591");
             }
-            printf("%d", current->occurrences);
+            printf("%d", current->meetings);
             printf("\n");
             printf(" %*s \u2502", -1 * spaceForName, ""); // line 3
             for (int i = 0; i < blocks; i++) {
@@ -288,13 +274,13 @@ int getMaxLengthOfNames(meetingHost_t * sortedList) {
 
 int getMaxValue(meetingHost_t *sortedList, int mode) {
     if (mode == MEETINGS) {
-        return sortedList->occurrences;
+        return sortedList->meetings;
     } else if (mode == PARTICIPANTS) {
         return sortedList->participants;
     } else if (mode == TIME) {
         return sortedList->time;
     } else {
-        return sortedList->occurrences;
+        return sortedList->meetings;
     }
 }
 
@@ -323,7 +309,7 @@ int getTotalByMode(meetingHost_t *sortedList, int mode) {
 int getTotalMeetings(meetingHost_t *sortedList) {
     int total = 0;
     for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
-        total += current->occurrences;
+        total += current->meetings;
     }
     return total;
 }
@@ -342,6 +328,25 @@ int getTotalTime(meetingHost_t *sortedList) {
         total += current->time;
     }
     return total;
+}
+
+void setRowCount(char *rowString) {
+    for (int i = 0; rowString[i] != '\0'; i++) {
+        if (isdigit(rowString[i]) == FALSE &&
+            !(i == 0 && rowString[1] != '\0' && (rowString[i] == '+' || rowString[i] == '-'))) {
+            // print invalid options for length error
+            exit(0);
+        }
+    }
+    int length = atoi(rowString);
+    if (length < 0) {
+        // print minus length error
+        exit(0);
+    } else if (length == 0) {
+        exit(0);
+    } else {
+        rows = length;
+    }
 }
 
 meetingHost_t *getSortedListByMode(int mode) {
@@ -364,7 +369,7 @@ meetingHost_t *sortListByMeetings() {
 
         meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
         for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
-            if (tempHighest->occurrences <= current->occurrences) {
+            if (tempHighest->meetings <= current->meetings) {
                 tempHighest = current;
                 previousToHighest = previous;
             }
