@@ -20,12 +20,11 @@ struct _ {
 } typedef meetingHost_t;
 
 meetingHost_t *meetingHosts = NULL;
-int mode;
-int isScaled = 0;
+int isScaled = FALSE;
 int rows = 10;
 
-int getMaxLengthOfNames();
-meetingHost_t *getSortedList();
+int getMaxLengthOfNames(meetingHost_t *sortedList);
+meetingHost_t *getSortedListByMode(int mode);
 meetingHost_t *sortListByMeetings();
 meetingHost_t *sortListByParticipants();
 meetingHost_t *sortListByTime();
@@ -34,6 +33,7 @@ int main(int argc, char ** argv) {
     char * fileNames[255];
     int fileNamesIndex = 0;
     FILE * filePointer;
+    int mode;
 
     int argIndex = 1;
     while (argIndex < argc) {
@@ -68,7 +68,7 @@ int main(int argc, char ** argv) {
                 }
             }
         } else if (0 == strcmp(argv[argIndex], "--scaled")) {
-            isScaled = 1;
+            isScaled = TRUE;
         } else {
             // terminate immediately if not .csv format
             int length = strlen(argv[argIndex]);
@@ -133,8 +133,7 @@ int main(int argc, char ** argv) {
         }
     }
 
-    meetingHost_t * sortedList = getSortedList();
-
+    meetingHost_t *sortedList = getSortedListByMode(mode);
     // plot the graph according to the mode
     int spaceForName = getMaxLengthOfNames(sortedList);
     int remainingSpace = 80 - spaceForName - 3;
@@ -147,7 +146,7 @@ int main(int argc, char ** argv) {
         printf(" %*s \u2502\n", -1 * spaceForName, current->name);
         printf(" %*s \u2502\n", -1 * spaceForName, "");
 
-        printf(" %*s \u2502\n", -1 * spaceForName, "");
+        printf(" %*s \u2502\n", -1 * spaceForName, ""); // spacing line
     }
 
     printf(" %*s \u2514", -1 * spaceForName, "");
@@ -167,7 +166,7 @@ int getMaxLengthOfNames(meetingHost_t * sortedList) {
     return maxLength;
 }
 
-meetingHost_t *getSortedList() {
+meetingHost_t *getSortedListByMode(int mode) {
     switch (mode) {
         case MEETINGS:
             return sortListByMeetings();
