@@ -80,19 +80,23 @@ int main(int argc, char ** argv) {
 
     for (int i = 0; i < fileNamesIndex; i++) {
         filePointer = NULL;
-        filePointer = fopen(*fileNames + i, "r");
+        filePointer = fopen(*(fileNames + i), "r");
         if (filePointer == NULL) {
             // terminate immediately
             return 0;
         } else {
-            char name[255];
+            char name[256];
             char participants[50];
             char time[50];
+            char line[356];
             while (TRUE) {
-                int scanRes = fscanf(filePointer, "%[^,],%[^,],%[^\n]\n", name, participants, time);
-                if (scanRes == EOF) {
+                if (fscanf(filePointer, "%s", line) == EOF) {
                     break;
-                } else if (scanRes != 3) {
+                }
+                strcat(line, " ");
+                int lineScanRes = sscanf(line, "%[^,],%[^,],%[^\0]", name, participants, time);
+                if (lineScanRes != 3) {
+                    printf("%d", lineScanRes);
                     // error
                     return 0;
                 } else {
@@ -131,7 +135,6 @@ int main(int argc, char ** argv) {
                         newHost->next = meetingHosts;
                         meetingHosts = newHost;
                     } else {
-
                         switch (mode) {
                             case MEETINGS:
                                 current->meetings++;
