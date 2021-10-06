@@ -6,9 +6,11 @@
 #define FALSE 0
 #define TRUE 1
 
-#define MEETINGS 0
-#define PARTICIPANTS 1
-#define TIME 2
+// define modes
+#define DEFAULT 0
+#define MEETINGS 1
+#define PARTICIPANTS 2
+#define TIME 3
 
 struct _ {
     int meetings;
@@ -18,6 +20,7 @@ struct _ {
     struct _ *next;
 } typedef meetingHost_t;
 
+void printInstructionMessage();
 int getMaxLengthOfNames(meetingHost_t *);
 int getMaxValue(meetingHost_t *, int);
 int getNumberOfDigits(int);
@@ -31,12 +34,15 @@ int getTotalParticipants(meetingHost_t *);
 int getTotalTime(meetingHost_t *);
 void setRowCount(char *);
 
+char * programName;
 meetingHost_t *meetingHosts = NULL;
 int rows = 10;
 
 int main(int argc, char ** argv) {
-    int mode;
+    int mode = DEFAULT;
     int isScaled = FALSE;
+    programName = argv[0];
+
     char * fileNames[255];
     int fileNamesIndex = 0;
     FILE * filePointer;
@@ -44,16 +50,35 @@ int main(int argc, char ** argv) {
     int argIndex = 1;
     while (argIndex < argc) {
         if (0 == strcmp(argv[argIndex], "-m")) {
-            mode = MEETINGS;
+            if (mode == DEFAULT || mode == MEETINGS) {
+                mode = MEETINGS;
+            } else {
+                printf("Cannot plot multiple parameters in same graph.\n");
+                printInstructionMessage();
+                return 0;
+            }
         } else if (0 == strcmp(argv[argIndex], "-t")) {
-            mode = TIME;
+            if (mode == DEFAULT || mode == TIME) {
+                mode = TIME;
+            } else {
+                printf("Cannot plot multiple parameters in same graph.\n");
+                printInstructionMessage();
+                return 0;
+            }
         } else if (0 == strcmp(argv[argIndex], "-p")) {
-            mode = PARTICIPANTS;
+            if (mode == DEFAULT || mode == PARTICIPANTS) {
+                mode = PARTICIPANTS;
+            } else {
+                printf("Cannot plot multiple parameters in same graph.\n");
+                printInstructionMessage();
+                return 0;
+            }
         } else if (0 == strcmp(argv[argIndex], "--scaled")) {
             isScaled = TRUE;
         } else if (0 == strcmp(argv[argIndex], "-l")) {
             if (argIndex == argc - 1) {
-                // print length not given error
+                printf("Not enough options for [-l]\n");
+                printInstructionMessage();
                 return 0;
             } else {
                 argIndex++;
@@ -61,10 +86,10 @@ int main(int argc, char ** argv) {
             }
         } else {
             // terminate immediately if not .csv format
-            int length = strlen(argv[argIndex]);
-            char *extension = &(argv[argIndex])[length - 4];
+            int lengthOfFileName = strlen(argv[argIndex]);
+            char *extension = &(argv[argIndex])[lengthOfFileName - 4];
             if (0 != strcmp(extension, ".csv")) {
-                // print incorrect file message
+                printf("Only .csv files should be given as inputs.\n");
                 return 0;
             }
             fileNames[fileNamesIndex] = argv[argIndex];
@@ -265,6 +290,10 @@ int main(int argc, char ** argv) {
     printf("\n");
 }
 
+void printInstructionMessage() {
+    printf("usage: %s [-l length] [-m | -t | -p] [--scaled] filename1 filename2 ..\n", programName);
+}
+
 int getMaxLengthOfNames(meetingHost_t * sortedList) {
     int maxLength = 0;
     for (meetingHost_t * current = sortedList; current != NULL; current = current->next) {
@@ -337,13 +366,15 @@ void setRowCount(char *rowString) {
     for (int i = 0; rowString[i] != '\0'; i++) {
         if (isdigit(rowString[i]) == FALSE &&
             !(i == 0 && rowString[1] != '\0' && (rowString[i] == '+' || rowString[i] == '-'))) {
-            // print invalid options for length error
+            printf("Invalid options for [-l]\n");
+            printInstructionMessage();
             exit(0);
         }
     }
     int length = atoi(rowString);
     if (length < 0) {
-        // print minus length error
+        printf("Invalid option(negative) for [-l]\n");
+        printInstructionMessage();
         exit(0);
     } else if (length == 0) {
         exit(0);
