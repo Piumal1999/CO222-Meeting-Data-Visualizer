@@ -22,7 +22,7 @@ struct _ {
 
 void printInstructionMessage();
 int getMaxLengthOfNames(meetingHost_t *);
-int getMaxValue(meetingHost_t *, int);
+int getMaxValueOfSortedList(meetingHost_t *, int);
 int getNumberOfDigits(int);
 meetingHost_t *getSortedListByMode(int);
 meetingHost_t *sortListByMeetings();
@@ -49,40 +49,46 @@ int main(int argc, char ** argv) {
 
     int argIndex = 1;
     while (argIndex < argc) {
-        if (0 == strcmp(argv[argIndex], "-m")) {
-            if (mode == DEFAULT || mode == MEETINGS) {
-                mode = MEETINGS;
+        if (argv[argIndex][0] == '-') {
+            if (0 == strcmp(argv[argIndex], "-m")) {
+                if (mode == DEFAULT || mode == MEETINGS) {
+                    mode = MEETINGS;
+                } else {
+                    printf("Cannot plot multiple parameters in same graph.\n");
+                    printInstructionMessage();
+                    return 0;
+                }
+            } else if (0 == strcmp(argv[argIndex], "-t")) {
+                if (mode == DEFAULT || mode == TIME) {
+                    mode = TIME;
+                } else {
+                    printf("Cannot plot multiple parameters in same graph.\n");
+                    printInstructionMessage();
+                    return 0;
+                }
+            } else if (0 == strcmp(argv[argIndex], "-p")) {
+                if (mode == DEFAULT || mode == PARTICIPANTS) {
+                    mode = PARTICIPANTS;
+                } else {
+                    printf("Cannot plot multiple parameters in same graph.\n");
+                    printInstructionMessage();
+                    return 0;
+                }
+            } else if (0 == strcmp(argv[argIndex], "--scaled")) {
+                isScaled = TRUE;
+            } else if (0 == strcmp(argv[argIndex], "-l")) {
+                if (argIndex == argc - 1) {
+                    printf("Not enough options for [-l]\n");
+                    printInstructionMessage();
+                    return 0;
+                } else {
+                    argIndex++;
+                    setRowCount(argv[argIndex]);
+                }
             } else {
-                printf("Cannot plot multiple parameters in same graph.\n");
+                printf("Invalid option [%s]\n", argv[argIndex]);
                 printInstructionMessage();
                 return 0;
-            }
-        } else if (0 == strcmp(argv[argIndex], "-t")) {
-            if (mode == DEFAULT || mode == TIME) {
-                mode = TIME;
-            } else {
-                printf("Cannot plot multiple parameters in same graph.\n");
-                printInstructionMessage();
-                return 0;
-            }
-        } else if (0 == strcmp(argv[argIndex], "-p")) {
-            if (mode == DEFAULT || mode == PARTICIPANTS) {
-                mode = PARTICIPANTS;
-            } else {
-                printf("Cannot plot multiple parameters in same graph.\n");
-                printInstructionMessage();
-                return 0;
-            }
-        } else if (0 == strcmp(argv[argIndex], "--scaled")) {
-            isScaled = TRUE;
-        } else if (0 == strcmp(argv[argIndex], "-l")) {
-            if (argIndex == argc - 1) {
-                printf("Not enough options for [-l]\n");
-                printInstructionMessage();
-                return 0;
-            } else {
-                argIndex++;
-                setRowCount(argv[argIndex]);
             }
         } else {
             // terminate immediately if not .csv format
@@ -99,7 +105,8 @@ int main(int argc, char ** argv) {
     }
 
     if (fileNamesIndex == 0) {
-        // print no files error
+        printf("No input files were given\n");
+        printInstructionMessage();
         return 0;
     }
 
@@ -107,22 +114,17 @@ int main(int argc, char ** argv) {
         filePointer = NULL;
         filePointer = fopen(*(fileNames + i), "r");
         if (filePointer == NULL) {
-            // terminate immediately
+            printf("Cannot open one or more given files\n");
             return 0;
         } else {
             char name[256];
-            char participants[50];
-            char time[50];
-            char line[356];
-            while (TRUE) {
-                if (fscanf(filePointer, "%s", line) == EOF) {
-                    break;
-                }
-                strcat(line, " ");
-                int lineScanRes = sscanf(line, "%[^,],%[^,],%[^\0]", name, participants, time);
+            char participants[256];
+            char time[256];
+            char line[780];
+            while (fgets (line, 780, filePointer) != NULL) {
+                int lineScanRes = sscanf(line, "%[^,],%[^,],%[^\n]", name, participants, time);
                 if (lineScanRes != 3) {
-                    printf("%d", lineScanRes);
-                    // error
+                    printf("File/s contain wrong entries.\n");
                     return 0;
                 } else {
                     meetingHost_t *current;
@@ -187,22 +189,27 @@ int main(int argc, char ** argv) {
         }
     }
 
-    int total = getTotalByMode(meetingHosts, mode);
-    free(meetingHosts);
-    meetingHost_t *sortedList = getSortedListByMode(mode);
-    // plot the graph according to the mode
+    if (meetingHosts == NULL) {
+        printf("No data to process\n");
+        return 0;
+    }
+
+    int total = getTotalByMode(meetingHosts, mode); // get sum of entries in the selected mode
+    meetingHost_t *sortedList = getSortedListByMode(mode);  // sort the linked list by selected mode
+
+    // calculate graph dimensions
     int spaceForName = getMaxLengthOfNames(sortedList);
-    int spaceForValue = getNumberOfDigits(getMaxValue(sortedList, mode));
+    int spaceForValue = getNumberOfDigits(getMaxValueOfSortedList(sortedList, mode));
     int remainingSpace = 80 - spaceForName - spaceForValue - 3;
 
-    float blockValue;
+    float blockValue;   // value represented by single block in the graph
     if (isScaled) {
-        blockValue = 1.0 * getMaxValue(sortedList, mode) / remainingSpace;
+        blockValue = 1.0 * getMaxValueOfSortedList(sortedList, mode) / remainingSpace;
     } else {
         blockValue = 1.0 * total / remainingSpace;
     }
 
-    printf("\n");
+    printf("\n");   // top margin
 
     // print graph data
     for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
@@ -294,6 +301,7 @@ void printInstructionMessage() {
     printf("usage: %s [-l length] [-m | -t | -p] [--scaled] filename1 filename2 ..\n", programName);
 }
 
+// function to get the maximum name length in a linked list
 int getMaxLengthOfNames(meetingHost_t * sortedList) {
     int maxLength = 0;
     for (meetingHost_t * current = sortedList; current != NULL; current = current->next) {
@@ -304,7 +312,8 @@ int getMaxLengthOfNames(meetingHost_t * sortedList) {
     return maxLength;
 }
 
-int getMaxValue(meetingHost_t *sortedList, int mode) {
+// function to get the maximum value of a sorted linked list in the selected mode
+int getMaxValueOfSortedList(meetingHost_t *sortedList, int mode) {
     if (mode == MEETINGS) {
         return sortedList->meetings;
     } else if (mode == PARTICIPANTS) {
@@ -316,6 +325,7 @@ int getMaxValue(meetingHost_t *sortedList, int mode) {
     }
 }
 
+// function to get the number of digits in a number
 int getNumberOfDigits(int number) {
     int digits = 0;
     while (number != 0) {
@@ -325,6 +335,7 @@ int getNumberOfDigits(int number) {
     return digits;
 }
 
+// function to get the total of selected mode in a linked list
 int getTotalByMode(meetingHost_t *sortedList, int mode) {
     switch (mode) {
         case MEETINGS:
@@ -338,6 +349,7 @@ int getTotalByMode(meetingHost_t *sortedList, int mode) {
     }
 }
 
+// function to get the total number of meetings in a meetingHost_t linked list
 int getTotalMeetings(meetingHost_t *sortedList) {
     int total = 0;
     for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
@@ -346,6 +358,7 @@ int getTotalMeetings(meetingHost_t *sortedList) {
     return total;
 }
 
+// function to get the total number of participants in a meetingHost_t linked list
 int getTotalParticipants(meetingHost_t *sortedList) {
     int total = 0;
     for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
@@ -354,6 +367,7 @@ int getTotalParticipants(meetingHost_t *sortedList) {
     return total;
 }
 
+// function to get the total time in a meetingHost_t linked list
 int getTotalTime(meetingHost_t *sortedList) {
     int total = 0;
     for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
@@ -362,6 +376,7 @@ int getTotalTime(meetingHost_t *sortedList) {
     return total;
 }
 
+// function check the -l argument input and set the required row count
 void setRowCount(char *rowString) {
     for (int i = 0; rowString[i] != '\0'; i++) {
         if (isdigit(rowString[i]) == FALSE &&
@@ -383,6 +398,7 @@ void setRowCount(char *rowString) {
     }
 }
 
+// function to sort the meetingHost_t linked list in the selected mode
 meetingHost_t *getSortedListByMode(int mode) {
     switch (mode) {
         case MEETINGS:
@@ -396,6 +412,7 @@ meetingHost_t *getSortedListByMode(int mode) {
     }
 }
 
+// function to sort the meetingHost_t linked list by meeting count
 meetingHost_t *sortListByMeetings() {
     meetingHost_t *sortedList = NULL;
     meetingHost_t *sortedListHead = NULL;
@@ -428,6 +445,7 @@ meetingHost_t *sortListByMeetings() {
     return sortedList;
 }
 
+// function to sort the meetingHost_t linked list by participant count
 meetingHost_t *sortListByParticipants() {
     meetingHost_t *sortedList = NULL;
     meetingHost_t *sortedListHead = NULL;
@@ -460,6 +478,7 @@ meetingHost_t *sortListByParticipants() {
     return sortedList;
 }
 
+// function to sort the meetingHost_t linked list by time duration
 meetingHost_t *sortListByTime() {
     meetingHost_t *sortedList = NULL;
     meetingHost_t *sortedListHead = NULL;
