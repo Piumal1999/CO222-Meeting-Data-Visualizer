@@ -14,25 +14,17 @@
 
 // structure to keep the data of a meeting host
 struct _ {
-    int meetings;
-    char *name;
-    int participants;
-    int time;
+    char *name; // name
+    int value;  // value according to the mode
     struct _ *next;
 } typedef meetingHost_t;
 
 void printInstructionMessage();
 void setRowCount(char *);
-int getTotalByMode(meetingHost_t *, int);
-int getTotalMeetings(meetingHost_t *);
-int getTotalParticipants(meetingHost_t *);
-int getTotalTime(meetingHost_t *);
-meetingHost_t *getSortedListByMode(int);
-meetingHost_t *sortListByMeetings();
-meetingHost_t *sortListByParticipants();
-meetingHost_t *sortListByTime();
+int getTotalOfValues(meetingHost_t *);
+meetingHost_t *getSortedList();
 int getMaxLengthOfNames(meetingHost_t *);
-int getMaxValueOfSortedList(meetingHost_t *, int);
+int getMaxValueOfSortedList(meetingHost_t *);
 int getNumberOfDigits(int);
 
 char *programName; // variable to keep the name of the program
@@ -57,6 +49,7 @@ int main(int argc, char **argv) {
                 if (mode == DEFAULT || mode == MEETINGS) {
                     mode = MEETINGS;
                 } else {
+                    // terminate if 2 modes are selected
                     printf("Cannot plot multiple parameters in same graph.\n");
                     printInstructionMessage();
                     return 0;
@@ -66,6 +59,7 @@ int main(int argc, char **argv) {
                 if (mode == DEFAULT || mode == TIME) {
                     mode = TIME;
                 } else {
+                    // terminate if 2 modes are selected
                     printf("Cannot plot multiple parameters in same graph.\n");
                     printInstructionMessage();
                     return 0;
@@ -75,6 +69,7 @@ int main(int argc, char **argv) {
                 if (mode == DEFAULT || mode == PARTICIPANTS) {
                     mode = PARTICIPANTS;
                 } else {
+                    // terminate if 2 modes are selected
                     printf("Cannot plot multiple parameters in same graph.\n");
                     printInstructionMessage();
                     return 0;
@@ -159,10 +154,10 @@ int main(int argc, char **argv) {
                         // add the data according to the selected mode
                         switch (mode) {
                             case MEETINGS:
-                                newHost->meetings = 1;
+                                newHost->value = 1;
                                 break;
                             case PARTICIPANTS:
-                                newHost->participants = atoi(participants);
+                                newHost->value = atoi(participants);
                                 break;
                             case TIME: {
                                 // split time string and extract hours and minutes
@@ -173,11 +168,11 @@ int main(int argc, char **argv) {
                                     token = strtok(NULL, ":");
                                     minutes = atoi(token);
                                 }
-                                newHost->time = hours * 60 + minutes;
+                                newHost->value = hours * 60 + minutes;
                                 break;
                             }
                             default:
-                                newHost->meetings = 1;
+                                newHost->value = 1;
                         }
                         // attach the new meeting host as the head of the linked list
                         newHost->next = meetingHosts;
@@ -186,10 +181,10 @@ int main(int argc, char **argv) {
                         // add the data according to the mode, if the meeting host already exists
                         switch (mode) {
                             case MEETINGS:
-                                current->meetings++;    // add 1 to meeting count
+                                current->value++;    // add 1 to meeting count
                                 break;
                             case PARTICIPANTS:
-                                current->participants += atoi(participants);    // add participants
+                                current->value += atoi(participants);    // add participants
                                 break;
                             case TIME: {
                                 // split time string and extract hours and minutes
@@ -200,11 +195,11 @@ int main(int argc, char **argv) {
                                     token = strtok(NULL, ":");
                                     minutes = atoi(token);
                                 }
-                                current->time += hours * 60 + minutes;  // add the time
+                                current->value += hours * 60 + minutes;  // add the time
                                 break;
                             }
                             default:
-                                current->meetings++;
+                                current->value++;
                         }
                     }
                 }
@@ -218,19 +213,19 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    int total = getTotalByMode(meetingHosts, mode); // get sum of entries in the selected mode
-    meetingHost_t *sortedList = getSortedListByMode(mode);  // sort the linked list by selected mode
+    int total = getTotalOfValues(meetingHosts); // get sum of entries in the selected mode
+    meetingHost_t *sortedList = getSortedList();  // sort the linked list by selected mode
 
     // calculate graph dimensions
     int spaceForName = getMaxLengthOfNames(sortedList);
-    int spaceForValue = getNumberOfDigits(getMaxValueOfSortedList(sortedList, mode));
+    int spaceForValue = getNumberOfDigits(getMaxValueOfSortedList(sortedList));
     int remainingSpace = 80 - spaceForName - spaceForValue - 3;
 
     float blockValue;   // value represented by single block in the graph
     // set the block value according to status of scaling option
     if (isScaled) {
         // block value depends on the maximum value
-        blockValue = 1.0 * getMaxValueOfSortedList(sortedList, mode) / remainingSpace;
+        blockValue = 1.0 * getMaxValueOfSortedList(sortedList) / remainingSpace;
     } else {
         blockValue = 1.0 * total / remainingSpace;  // block value depends on the total
     }
@@ -239,76 +234,28 @@ int main(int argc, char **argv) {
 
     // print the graph by iterating through the sorted list
     for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
-        if (mode == MEETINGS || mode == DEFAULT) {  // if the mode is set to display meetings
-            int blocks = current->meetings / blockValue;    // calculate the required number of blocks
-            //  print first line of the row
-            printf(" %*s \u2502", -1 * spaceForName, "");   // set the padding
-            for (int i = 0; i < blocks; i++) {  // print blocks
-                printf("\u2591");
-            }
-            printf("\n");
-
-            //  print second line of the row
-            printf(" %*s \u2502", -1 * spaceForName, current->name);
-            for (int i = 0; i < blocks; i++) {  // print blocks
-                printf("\u2591");
-            }
-            printf("%d", current->meetings);    // print the number of meetings
-            printf("\n");
-
-            //  print 3rd line of the row
-            printf(" %*s \u2502", -1 * spaceForName, "");
-            for (int i = 0; i < blocks; i++) {  // print blocks
-                printf("\u2591");
-            }
-            printf("\n");
-        } else if (mode == PARTICIPANTS) {  // if the mode is set to display participants
-            int blocks = current->participants / blockValue;    // calculate the required number of blocks
-            //  print first line of the row
-            printf(" %*s \u2502", -1 * spaceForName, "");   // set the padding
-            for (int i = 0; i < blocks; i++) {  // print blocks
-                printf("\u2591");
-            }
-            printf("\n");
-
-            //  print second line of the row
-            printf(" %*s \u2502", -1 * spaceForName, current->name);
-            for (int i = 0; i < blocks; i++) {  // print blocks
-                printf("\u2591");
-            }
-            printf("%d", current->participants);    // print the number of participants
-            printf("\n");
-
-            //  print 3rd line of the row
-            printf(" %*s \u2502", -1 * spaceForName, "");
-            for (int i = 0; i < blocks; i++) {  // print blocks
-                printf("\u2591");
-            }
-            printf("\n");
-        } else if (mode == TIME) {  // if the mode is set to display time
-            int blocks = current->time / blockValue;    // calculate the required number of blocks
-            //  print first line of the row
-            printf(" %*s \u2502", -1 * spaceForName, "");   // set the padding
-            for (int i = 0; i < blocks; i++) {  // print blocks
-                printf("\u2591");
-            }
-            printf("\n");
-
-            //  print second line of the row
-            printf(" %*s \u2502", -1 * spaceForName, current->name);
-            for (int i = 0; i < blocks; i++) {  // print blocks
-                printf("\u2591");
-            }
-            printf("%d", current->time);    // print the total time
-            printf("\n");
-
-            //  print 3rd line of the row
-            printf(" %*s \u2502", -1 * spaceForName, "");
-            for (int i = 0; i < blocks; i++) {  // print blocks
-                printf("\u2591");
-            }
-            printf("\n");
+        int blocks = current->value / blockValue;    // calculate the required number of blocks
+        //  print first line of the row
+        printf(" %*s \u2502", -1 * spaceForName, "");   // set the padding
+        for (int i = 0; i < blocks; i++) {  // print blocks
+            printf("\u2591");
         }
+        printf("\n");
+
+        //  print second line of the row
+        printf(" %*s \u2502", -1 * spaceForName, current->name);
+        for (int i = 0; i < blocks; i++) {  // print blocks
+            printf("\u2591");
+        }
+        printf("%d", current->value);    // print the number of meetings
+        printf("\n");
+
+        //  print 3rd line of the row
+        printf(" %*s \u2502", -1 * spaceForName, "");
+        for (int i = 0; i < blocks; i++) {  // print blocks
+            printf("\u2591");
+        }
+        printf("\n");
 
         printf(" %*s \u2502\n", -1 * spaceForName, ""); // print the spacing line
     }
@@ -355,145 +302,25 @@ void setRowCount(char *rowString) {
 }
 
 // function to get the total of selected mode in a linked list
-int getTotalByMode(meetingHost_t *sortedList, int mode) {
-    switch (mode) {
-        case MEETINGS:
-            return getTotalMeetings(sortedList);
-        case PARTICIPANTS:
-            return getTotalParticipants(sortedList);
-        case TIME:
-            return getTotalTime(sortedList);
-        default:
-            return getTotalMeetings(sortedList);
-    }
-}
-
-// function to get the total number of meetings in a meetingHost_t linked list
-int getTotalMeetings(meetingHost_t *sortedList) {
+int getTotalOfValues(meetingHost_t *sortedList) {
     int total = 0;
     for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
-        total += current->meetings;
-    }
-    return total;
-}
-
-// function to get the total number of participants in a meetingHost_t linked list
-int getTotalParticipants(meetingHost_t *sortedList) {
-    int total = 0;
-    for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
-        total += current->participants;
-    }
-    return total;
-}
-
-// function to get the total time in a meetingHost_t linked list
-int getTotalTime(meetingHost_t *sortedList) {
-    int total = 0;
-    for (meetingHost_t *current = sortedList; current != NULL; current = current->next) {
-        total += current->time;
+        total += current->value;
     }
     return total;
 }
 
 // function to sort the meetingHost_t linked list in the selected mode
-meetingHost_t *getSortedListByMode(int mode) {
-    switch (mode) {
-        case MEETINGS:
-            return sortListByMeetings();
-        case PARTICIPANTS:
-            return sortListByParticipants();
-        case TIME:
-            return sortListByTime();
-        default:
-            return sortListByMeetings();
-    }
-}
-
-// function to sort the meetingHost_t linked list by meeting count
-meetingHost_t *sortListByMeetings() {
+meetingHost_t *getSortedList() {
     meetingHost_t *sortedList = NULL;   // new pointer for sorted list
     meetingHost_t *sortedListNode = NULL;   // pointer for sorted list tail node
 
     // loop through the meeting hosts linked list until end or until the requested number of rows are found
     for (int i = 0; meetingHosts != NULL && i < rows; i++) {
-        // find the host with the highest meeting count
+        // find the host with the highest value
         meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
         for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
-            if (tempHighest->meetings <= current->meetings) {
-                tempHighest = current;
-                previousToHighest = previous;
-            }
-        }
-
-        // attach the highest one to the sorted linked list
-        if (sortedList == NULL) {
-            sortedList = tempHighest;
-            sortedListNode = sortedList;
-        } else {
-            sortedListNode->next = tempHighest;
-            sortedListNode = sortedListNode->next;
-        }
-
-        // remove the highest one from the unsorted linked list
-        if (previousToHighest == NULL) {
-            meetingHosts = tempHighest->next;
-        } else {
-            previousToHighest->next = tempHighest->next;
-        }
-
-    }
-    sortedListNode->next = NULL;
-    return sortedList;  // return the head of sorted list
-}
-
-// function to sort the meetingHost_t linked list by participant count
-meetingHost_t *sortListByParticipants() {
-    meetingHost_t *sortedList = NULL;   // new pointer for sorted list
-    meetingHost_t *sortedListNode = NULL;   // pointer for sorted list tail node
-
-    // loop through the meeting hosts linked list until end or until the requested number of rows are found
-    for (int i = 0; meetingHosts != NULL && i < rows; i++) {
-        // find the host with the highest participant count
-        meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
-        for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
-            if (tempHighest->participants <= current->participants) {
-                tempHighest = current;
-                previousToHighest = previous;
-            }
-        }
-
-        // attach the highest one to the sorted linked list
-        if (sortedList == NULL) {
-            sortedList = tempHighest;
-            sortedListNode = sortedList;
-        } else {
-            sortedListNode->next = tempHighest;
-            sortedListNode = sortedListNode->next;
-        }
-
-        // remove the highest one from the unsorted linked list
-        if (previousToHighest == NULL) {
-            meetingHosts = tempHighest->next;
-        } else {
-            previousToHighest->next = tempHighest->next;
-        }
-
-    }
-    sortedListNode->next = NULL;
-    return sortedList;  // return the head of sorted list
-}
-
-// function to sort the meetingHost_t linked list by time duration
-meetingHost_t *sortListByTime() {
-    meetingHost_t *sortedList = NULL;   // new pointer for sorted list
-    meetingHost_t *sortedListNode = NULL;   // pointer for sorted list tail node
-
-    // loop through the meeting hosts linked list until end or until the requested number of rows are found
-    for (int i = 0; meetingHosts != NULL && i < rows; i++) {
-        // find the host with the highest time value
-        meetingHost_t *tempHighest = meetingHosts, *previousToHighest = NULL, *previous = NULL;
-        for (meetingHost_t *current = meetingHosts; current != NULL; previous = current, current = current->next) {
-            if (tempHighest->time <= current->time) {
+            if (tempHighest->value <= current->value) {
                 tempHighest = current;
                 previousToHighest = previous;
             }
@@ -533,16 +360,8 @@ int getMaxLengthOfNames(meetingHost_t *sortedList) {
 
 // function to get the maximum value of a sorted linked list in the selected mode
 // always the first element contains the maximum value
-int getMaxValueOfSortedList(meetingHost_t *sortedList, int mode) {
-    if (mode == MEETINGS) {
-        return sortedList->meetings;
-    } else if (mode == PARTICIPANTS) {
-        return sortedList->participants;
-    } else if (mode == TIME) {
-        return sortedList->time;
-    } else {
-        return sortedList->meetings;
-    }
+int getMaxValueOfSortedList(meetingHost_t *sortedList) {
+    return sortedList->value;
 }
 
 // function to get the number of digits in a number
